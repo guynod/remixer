@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
 import './App.css'
 
 function App() {
@@ -18,26 +18,26 @@ function App() {
     setError('')
 
     try {
-      const openai = new OpenAI({
-        apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-        dangerouslyAllowBrowser: true
+      const anthropic = new Anthropic({
+        apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
       })
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+      const response = await anthropic.messages.create({
+        model: "claude-3-sonnet-20240229",
+        max_tokens: 1024,
         messages: [
           {
-            role: "system",
-            content: "You are a creative assistant that remixes and reimagines text in interesting ways. Keep the main message but make it more engaging."
-          },
-          {
             role: "user",
-            content: inputText
+            content: `Please remix and reimagine this text in an interesting way while keeping the main message: ${inputText}`
           }
         ],
       })
 
-      setOutputText(response.choices[0].message.content || '')
+      const remixedContent = response.content[0].type === 'text' 
+        ? response.content[0].text 
+        : 'Unable to process response'
+      
+      setOutputText(remixedContent)
     } catch (err) {
       setError('Failed to remix text. Please check your API key and try again.')
       console.error(err)
@@ -50,7 +50,7 @@ function App() {
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
-          Content Remixer
+          Content Remixer (Powered by Claude)
         </h1>
         
         <div className="bg-white shadow-sm rounded-lg p-6">
