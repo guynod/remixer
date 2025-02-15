@@ -1,12 +1,12 @@
 # Content Remixer
 
-A simple React application that helps you remix and reimagine text content using Claude AI.
+A simple React application that helps you remix and reimagine text content using Perplexity AI.
 
 ## Features
 
 1. Paste in text you want to remix
 2. Click a button to apply the remixing
-3. Uses Anthropic's Claude 3 Sonnet to generate creative variations
+3. Uses Perplexity AI's Mixtral-8x7b model to generate creative variations
 4. See the remixed output instantly
 
 ## Setup
@@ -16,10 +16,14 @@ A simple React application that helps you remix and reimagine text content using
    ```bash
    npm install
    ```
-3. Create a `.env` file in the root directory and add your Anthropic API key:
+3. Create a `.env` file in the root directory and add your Perplexity API key:
    ```
-   VITE_ANTHROPIC_API_KEY=your-anthropic-api-key-here
+   VITE_PERPLEXITY_API_KEY=your-perplexity-api-key-here
    ```
+   You can get your API key by:
+   - Going to https://www.perplexity.ai/settings
+   - Clicking on the "API" tab
+   - Creating a new API key
 4. Start the development server:
    ```bash
    npm run dev
@@ -29,16 +33,16 @@ A simple React application that helps you remix and reimagine text content using
 
 - React with TypeScript
 - Tailwind CSS for styling
-- Anthropic Claude API for content remixing
+- Perplexity AI API for content remixing
 - Vite for build tooling
 
 ## Usage
 
 1. Enter your text in the input box
 2. Click "Remix Content"
-3. Wait for Claude to process your text
+3. Wait for Perplexity to process your text
 4. View the remixed version in the output box
 
 ## Note
 
-Make sure to replace the Anthropic API key in the `.env` file with your actual API key from [Anthropic's Console](https://console.anthropic.com/).
+Make sure to keep your Perplexity API key secure and never commit it to version control. The `.env` file is already included in `.gitignore` for your security.

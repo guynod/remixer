@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Anthropic from '@anthropic-ai/sdk'
 import './App.css'
 
 function App() {
@@ -18,25 +17,30 @@ function App() {
     setError('')
 
     try {
-      const anthropic = new Anthropic({
-        apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
+      const response = await fetch('https://api.perplexity.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_PERPLEXITY_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'mixtral-8x7b-instruct',
+          messages: [
+            {
+              role: 'user',
+              content: `Please remix and reimagine this text in an interesting way while keeping the main message: ${inputText}`
+            }
+          ],
+          temperature: 0.7
+        })
       })
 
-      const response = await anthropic.messages.create({
-        model: "claude-3-sonnet-20240229",
-        max_tokens: 1024,
-        messages: [
-          {
-            role: "user",
-            content: `Please remix and reimagine this text in an interesting way while keeping the main message: ${inputText}`
-          }
-        ],
-      })
+      if (!response.ok) {
+        throw new Error('Failed to get response from Perplexity API')
+      }
 
-      const remixedContent = response.content[0].type === 'text' 
-        ? response.content[0].text 
-        : 'Unable to process response'
-      
+      const data = await response.json()
+      const remixedContent = data.choices[0].message.content
       setOutputText(remixedContent)
     } catch (err) {
       setError('Failed to remix text. Please check your API key and try again.')
@@ -50,7 +54,7 @@ function App() {
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
-          Content Remixer (Powered by Claude)
+          Content Remixer (Powered by Perplexity AI)
         </h1>
         
         <div className="bg-white shadow-sm rounded-lg p-6">
