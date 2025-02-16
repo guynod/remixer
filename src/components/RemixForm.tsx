@@ -40,15 +40,15 @@ export function RemixForm() {
 
   return (
     <div className="space-y-10">
-      <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-indigo-200/20">
-        <label htmlFor="input" className="block text-xl font-semibold text-indigo-100 mb-4">
+      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-indigo-200/30">
+        <label htmlFor="input" className="block text-2xl font-semibold text-white mb-4">
           Original Text
         </label>
         <div className="relative">
           <textarea
             id="input"
             rows={8}
-            className="block w-full rounded-xl border-indigo-300/20 bg-white/5 shadow-lg focus:border-indigo-400 focus:ring focus:ring-indigo-400/20 transition-all duration-200 resize-none text-white text-xl leading-relaxed placeholder-indigo-300/50"
+            className="block w-full rounded-xl border-2 border-indigo-300/30 bg-white/10 shadow-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30 transition-all duration-200 resize-none text-white text-xl leading-relaxed placeholder-indigo-300/70"
             placeholder="Enter your text here to transform it into something creative..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -71,7 +71,7 @@ export function RemixForm() {
       <button
         onClick={handleRemix}
         disabled={isLoading || !inputText.trim()}
-        className="w-full flex justify-center items-center py-6 px-8 rounded-2xl text-xl font-bold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-900 focus:ring-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-[1.02] transform-gpu"
+        className="w-full flex justify-center items-center py-6 px-8 rounded-2xl text-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 hover:from-blue-700 hover:via-indigo-600 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-[1.02] transform-gpu border border-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-900 focus:ring-indigo-400"
       >
         {isLoading ? (
           <span className="flex items-center">
@@ -92,7 +92,7 @@ export function RemixForm() {
       </button>
 
       {error && (
-        <div className="rounded-xl bg-red-500/10 p-6 border border-red-500/20">
+        <div className="rounded-xl bg-red-500/20 p-6 border-2 border-red-500/30 shadow-lg">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -107,11 +107,11 @@ export function RemixForm() {
       )}
 
       {outputText && (
-        <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-indigo-300/20">
-          <label htmlFor="output" className="block text-xl font-semibold text-indigo-100 mb-4">
+        <div className="bg-gradient-to-r from-blue-600/20 via-indigo-600/20 to-purple-600/20 backdrop-blur-md rounded-2xl p-8 shadow-2xl border-2 border-indigo-300/30">
+          <label htmlFor="output" className="block text-2xl font-semibold text-white mb-4">
             Remixed Version
           </label>
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 shadow-inner border border-indigo-200/20">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 shadow-inner border border-indigo-200/30">
             <textarea
               id="output"
               rows={10}

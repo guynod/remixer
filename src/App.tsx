@@ -1,4 +1,3 @@
-import './App.css'
 import { RemixForm } from './components/RemixForm'
 
 function App() {
