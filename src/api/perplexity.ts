@@ -90,10 +90,22 @@ async function makePerplexityRequest(request: PerplexityRequest): Promise<Perple
 }
 
 const TweetsFromPostPrompt = `
-You are a social media expert and ghost writer.  Your job is to come up with tweets to share idea from the posts.
+You are a social media expert and ghost writer. Your job is to come up with tweets to share ideas from the posts.
 
 Since you are a ghost writer you need to make sure you follow the style and tone of the blog post as closely as possible.
-Remember that tweets can't be more than 280 characters.  Please return the tweets in a list format with each tweet on a new line, and be sure to include at leaset 5 tweets.  Do not use any hashtags or emojis.
+Remember that tweets can't be more than 280 characters. 
+
+Format your response as follows:
+- Each tweet should be on its own line
+- Start each tweet with "TWEET:" (in uppercase)
+- Include exactly 5 tweets
+- Do not use any hashtags or emojis
+- Keep the original tone and style
+- Make each tweet stand alone and meaningful
+
+Example format:
+TWEET: First tweet content here
+TWEET: Second tweet content here
 
 Here is the blog post:`;
 
