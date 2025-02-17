@@ -89,14 +89,22 @@ async function makePerplexityRequest(request: PerplexityRequest): Promise<Perple
   return data;
 }
 
-export async function remixContent(content: string): Promise<string> {
+const TweetsFromPostPrompt = `
+You are a social media expert and ghost writer.  Your job is to come up with tweets to share idea from the posts.
+
+Since you are a ghost writer you need to make sure you follow the style and tone of the blog post as closely as possible.
+Remember that tweets can't be more than 280 characters.  Please return the tweets in a list format with each tweet on a new line, and be sure to include at leaset 5 tweets.  Do not use any hashtags or emojis.
+
+Here is the blog post:`;
+
+export async function TweetsFromPost(content: string): Promise<string> {
   try {
     const request: PerplexityRequest = {
       model: API_CONFIG.model,
       messages: [
         {
           role: 'system',
-          content: 'You are a creative content remixer. Be imaginative while preserving the core message.'
+          content: TweetsFromPostPrompt
         },
         {
           role: 'user',
@@ -112,6 +120,6 @@ export async function remixContent(content: string): Promise<string> {
     if (error instanceof PerplexityError) {
       throw error;
     }
-    throw new PerplexityError('Error remixing content: ' + (error as Error).message);
+    throw new PerplexityError('Error creating tweets: ' + (error as Error).message);
   }
 } 

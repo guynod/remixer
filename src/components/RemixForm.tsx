@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { remixContent, PerplexityError } from '../api/perplexity'
+import { TweetsFromPost, PerplexityError } from '../api/perplexity'
 
 export function RemixForm() {
   const [inputText, setInputText] = useState('')
@@ -18,7 +18,7 @@ export function RemixForm() {
     setOutputText('')
 
     try {
-      const remixedContent = await remixContent(inputText)
+      const remixedContent = await TweetsFromPost(inputText)
       setOutputText(remixedContent)
     } catch (err) {
       if (err instanceof PerplexityError) {
