@@ -16,6 +16,8 @@ export const SavedTweets = forwardRef<SavedTweetsRef, SavedTweetsProps>(
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [justSaved, setJustSaved] = useState<string | null>(null);
+    const [deletingTweetId, setDeletingTweetId] = useState<string | null>(null);
+    const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
 
     useEffect(() => {
       if (!isHidden) {
@@ -41,7 +43,6 @@ export const SavedTweets = forwardRef<SavedTweetsRef, SavedTweetsProps>(
       refreshTweets: async () => {
         const savedTweets = await getAllTweets();
         setTweets(savedTweets);
-        // Highlight the newest tweet
         if (savedTweets.length > 0) {
           setJustSaved(savedTweets[0].id);
           setTimeout(() => setJustSaved(null), 2000);
@@ -51,11 +52,31 @@ export const SavedTweets = forwardRef<SavedTweetsRef, SavedTweetsProps>(
 
     async function handleDelete(id: string) {
       try {
-        await deleteTweet(id);
-        await loadTweets();
+        setError(null);
+        setDeleteSuccess(null);
+        setDeletingTweetId(id);
+        
+        // Attempt to delete from database first
+        const success = await deleteTweet(id);
+        
+        if (success) {
+          // Remove from UI only after successful database deletion
+          setTweets(prev => prev.filter(tweet => tweet.id !== id));
+          setDeleteSuccess('Tweet deleted successfully');
+          
+          // Clear success message after 2 seconds
+          setTimeout(() => {
+            setDeleteSuccess(null);
+          }, 2000);
+        }
       } catch (err) {
-        setError('Failed to delete tweet. Please try again.');
         console.error('Error deleting tweet:', err);
+        setError('Failed to delete tweet. Please try again.');
+        
+        // Refresh the list to ensure UI is in sync with database
+        await loadTweets();
+      } finally {
+        setDeletingTweetId(null);
       }
     }
 
@@ -91,14 +112,22 @@ export const SavedTweets = forwardRef<SavedTweetsRef, SavedTweetsProps>(
             </button>
           </div>
           
+          {deleteSuccess && (
+            <div className="bg-green-500/20 p-4 border-b border-green-500/30">
+              <p className="text-green-200 text-center">{deleteSuccess}</p>
+            </div>
+          )}
+          
+          {error && (
+            <div className="bg-red-500/20 p-4 border-b border-red-500/30">
+              <p className="text-red-200 text-center">{error}</p>
+            </div>
+          )}
+          
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {isLoading ? (
               <div className="flex justify-center items-center h-32">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-              </div>
-            ) : error ? (
-              <div className="bg-red-500/20 rounded-xl p-4 text-white">
-                {error}
               </div>
             ) : tweets.length === 0 ? (
               <div className="text-center text-indigo-300">
@@ -117,12 +146,22 @@ export const SavedTweets = forwardRef<SavedTweetsRef, SavedTweetsProps>(
                     <div className="flex flex-col gap-2">
                       <button
                         onClick={() => handleDelete(tweet.id)}
-                        className="text-red-400 hover:text-red-300 transition-colors"
+                        disabled={deletingTweetId === tweet.id}
+                        className={`text-red-400 hover:text-red-300 transition-colors ${
+                          deletingTweetId === tweet.id ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                         title="Delete tweet"
                       >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        {deletingTweetId === tweet.id ? (
+                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
                       </button>
                       <button
                         onClick={() => handlePostToTwitter(tweet.content)}

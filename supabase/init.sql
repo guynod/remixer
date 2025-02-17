@@ -52,9 +52,11 @@ create policy "Users can update their own tweets"
     on public.tweets for update
     using (auth.uid() = user_id);
 
-create policy "Users can delete their own tweets"
+-- Update the delete policy to allow anonymous deletions
+drop policy if exists "Users can delete their own tweets" on public.tweets;
+create policy "Anyone can delete tweets"
     on public.tweets for delete
-    using (auth.uid() = user_id);
+    using (true);
 
 -- Create a function to clean up old tweets if needed
 create or replace function public.cleanup_old_tweets()
