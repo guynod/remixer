@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { TweetsFromPost, PerplexityError } from '../api/perplexity'
 import { saveTweet } from '../lib/supabase'
 import { SavedTweets } from './SavedTweets'
@@ -8,8 +8,10 @@ export function RemixForm() {
   const [outputText, setOutputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [isSavedTweetsOpen, setIsSavedTweetsOpen] = useState(false)
+  const [isSavedTweetsHidden, setIsSavedTweetsHidden] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [savedTweetIds, setSavedTweetIds] = useState<{[key: string]: boolean}>({})
+  const savedTweetsRef = useRef<{ refreshTweets: () => void } | null>(null)
 
   const handleRemix = useCallback(async () => {
     if (!inputText.trim()) {
@@ -42,30 +44,52 @@ export function RemixForm() {
     }
   }, [inputText])
 
-  async function handleSaveTweet(content: string) {
+  async function handleSaveTweet(content: string, tempId: string) {
     try {
       setSaveError(null)
-      await saveTweet(content)
-      // Optional: Show success message
+      
+      // Show immediate visual feedback
+      setSavedTweetIds(prev => ({ ...prev, [tempId]: true }))
+      
+      const savedTweet = await saveTweet(content)
+      if (savedTweet) {
+        // Refresh the saved tweets list
+        savedTweetsRef.current?.refreshTweets()
+        
+        // Reset the saved status after 2 seconds
+        setTimeout(() => {
+          setSavedTweetIds(prev => {
+            const newState = { ...prev }
+            delete newState[tempId]
+            return newState
+          })
+        }, 2000)
+      }
     } catch (err) {
       console.error('Error saving tweet:', err)
       setSaveError('Failed to save tweet. Please try again.')
+      // Remove visual feedback if save failed
+      setSavedTweetIds(prev => {
+        const newState = { ...prev }
+        delete newState[tempId]
+        return newState
+      })
     }
   }
 
   return (
-    <>
-      <div className="space-y-10">
+    <div className="flex">
+      <div className={`flex-1 space-y-10 ${!isSavedTweetsHidden ? 'mr-96' : ''}`}>
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold text-white">Create New Tweets</h2>
           <button
-            onClick={() => setIsSavedTweetsOpen(true)}
+            onClick={() => setIsSavedTweetsHidden(!isSavedTweetsHidden)}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 rounded-lg text-white font-medium hover:bg-indigo-500/30 transition-colors duration-200"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
-            View Saved Tweets
+            {isSavedTweetsHidden ? 'Show Saved Tweets' : 'Hide Saved Tweets'}
           </button>
         </div>
 
@@ -156,49 +180,68 @@ export function RemixForm() {
               Generated Tweets
             </label>
             <div className="space-y-4">
-              {outputText.split('\n').filter(line => line.startsWith('TWEET:')).map((tweet, index) => (
-                <div 
-                  key={index}
-                  className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-inner border border-indigo-200/30 transition-all duration-300 hover:bg-white/20"
-                >
-                  <div className="flex justify-between items-start gap-4">
-                    <p className="text-white text-xl leading-relaxed flex-grow">
-                      {tweet.replace('TWEET:', '').trim()}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleSaveTweet(tweet.replace('TWEET:', '').trim())}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 rounded-lg text-white font-medium hover:bg-indigo-500/30 transition-colors duration-200"
-                      >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                        </svg>
-                        Save
-                      </button>
-                      <a
-                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet.replace('TWEET:', '').trim())}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-[#1DA1F2] rounded-lg text-white font-medium hover:bg-[#1a8cd8] transition-colors duration-200 whitespace-nowrap"
-                      >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                        </svg>
-                        Post to Twitter
-                      </a>
+              {outputText.split('\n').filter(line => line.startsWith('TWEET:')).map((tweet, index) => {
+                const tweetContent = tweet.replace('TWEET:', '').trim()
+                const charCount = tweetContent.length
+                const tempId = `temp-${index}`
+                const isCurrentlySaved = savedTweetIds[tempId]
+                return (
+                  <div 
+                    key={index}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-inner border border-indigo-200/30 transition-all duration-300 hover:bg-white/20"
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-grow">
+                        <textarea
+                          className="w-full bg-transparent text-white text-xl leading-relaxed focus:outline-none resize-none"
+                          value={tweetContent}
+                          onChange={(e) => {
+                            const lines = outputText.split('\n')
+                            lines[lines.findIndex(l => l === tweet)] = `TWEET: ${e.target.value}`
+                            setOutputText(lines.join('\n'))
+                          }}
+                          rows={Math.ceil(tweetContent.length / 50)}
+                        />
+                        <div className="flex justify-between items-center mt-2">
+                          <span className={`text-sm ${charCount > 280 ? 'text-red-400' : 'text-indigo-300'}`}>
+                            {280 - charCount} characters remaining
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSaveTweet(tweetContent, tempId)}
+                          disabled={charCount > 280 || isCurrentlySaved}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-all duration-200 ${
+                            isCurrentlySaved 
+                              ? 'bg-green-500/40 scale-105' 
+                              : 'bg-indigo-500/20 hover:bg-indigo-500/30 hover:scale-105'
+                          }`}
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {isCurrentlySaved ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            ) : (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                            )}
+                          </svg>
+                          {isCurrentlySaved ? 'Saved!' : 'Save'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
       </div>
 
       <SavedTweets
-        isOpen={isSavedTweetsOpen}
-        onClose={() => setIsSavedTweetsOpen(false)}
+        ref={savedTweetsRef}
+        isHidden={isSavedTweetsHidden}
+        onToggle={() => setIsSavedTweetsHidden(!isSavedTweetsHidden)}
       />
-    </>
+    </div>
   )
 } 
